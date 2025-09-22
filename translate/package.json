@@ -9,10 +9,12 @@
     "web": "expo start --web"
   },
   "dependencies": {
+    "axios": "^1.12.2",
     "expo": "~54.0.9",
     "expo-status-bar": "~3.0.8",
     "react": "19.1.0",
-    "react-native": "0.81.4"
+    "react-native": "0.81.4",
+    "react-native-dropdown-picker": "^5.4.6"
   },
   "private": true
 }
