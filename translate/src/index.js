@@ -49,7 +49,7 @@ const TranslateApp = () => {
 
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>TranslateApp</Text>
+            <Text style={styles.title}>BabelText</Text>
             <View style={styles.dropdowncontainer}>
                 <DropDownPicker
                     open={openFrom}
