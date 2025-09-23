@@ -11,39 +11,56 @@ const TranslateApp = () => {
     const [openFrom, setOpenFrom] = useState(false);
     const [openTo, setOpenTo] = useState(false);
 
-    const API_KEY = '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';
+    const API_KEY = 'AIzaSyClglfVB8HPSi_wA6L0R7SITY3RqiX_xhk';
 
-    // Memoized handlers to prevent unnecessary re-renders
     const handleSetOpenFrom = useCallback((open) => setOpenFrom(open), []);
     const handleSetOpenTo = useCallback((open) => setOpenTo(open), []);
     const handleSetFromLanguage = useCallback((value) => setFromLanguage(value), []);
     const handleSetToLanguage = useCallback((value) => setToLanguage(value), []);
 
     const translateText = async () => {
+        if (!inputText.trim()) return; 
         try {
             const response = await axios.post(
-                'https://api.openai.com/v1/chat/completions',
+                `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`,
                 {
-                    model: 'gpt-3.5-turbo',
-                    messages: [
-                        { role: 'system', content: 'You are a helpful assistant that translates text.' },
-                        { role: 'user', content: `Translate the following text from ${fromLanguage} to ${toLanguage}: ${inputText}` }
+                    system_instruction: {
+                        parts: [
+                            {
+                                text: "You are a helpful assistant that ONLY outputs the translation of the text. Do not include any extra words or explanation."
+                            }
+                        ]
+                    },
+                    contents: [
+                        {
+                            parts: [
+                                {
+                                    text: `Translate the following text from ${fromLanguage} to ${toLanguage}: "${inputText}"`
+                                }
+                            ]
+                        }
                     ],
-                    max_tokens: 1000,
-                    temperature: 0.3,
+                    generationConfig: {
+                        temperature: 0.0,
+                        candidate_count: 1,
+                        top_p: 0.95,
+                        top_k: 40,
+                        max_output_tokens: 500,
+                        thinkingConfig: { thinkingBudget: 0 }
+                    }
                 },
                 {
                     headers: {
-                        'Content-Type': 'application/json',
-                        Authorization: `Bearer ${API_KEY}`,
-                    },
+                        'Content-Type': 'application/json'
+                    }
                 }
             );
 
-            const translated = response.data.choices[0].message.content; // Extract translated text
-            setTranslatedText(translated); // Update state
+            const translated = response.data.candidates[0].content.parts[0].text;
+            setTranslatedText(translated);
+
         } catch (error) {
-            console.error('Error during translation:', error);
+            console.error('Error during translation:', error.response?.data || error.message);
         }
     };
 
@@ -65,7 +82,6 @@ const TranslateApp = () => {
                     ]}
                     style={styles.dropdown}
                     containerStyle={{ flex: 1, alignItems: 'center' }}
-                    onChangeValue={(value) => setFromLanguage(value)}
                 />
                 <DropDownPicker
                     open={openTo}
@@ -81,7 +97,6 @@ const TranslateApp = () => {
                     ]}
                     style={styles.dropdown}
                     containerStyle={{ flex: 1, alignItems: 'center' }}
-                    onChangeValue={(value) => setToLanguage(value)}
                 />
             </View>
             <TextInput
@@ -89,6 +104,8 @@ const TranslateApp = () => {
                 onChangeText={(text) => setInputText(text)}
                 value={inputText}
                 multiline
+                placeholder="Enter text to translate"
+                placeholderTextColor="#888"
             />
             <TouchableOpacity
                 style={styles.button}
@@ -99,7 +116,7 @@ const TranslateApp = () => {
             >
                 <Text style={styles.buttonText}>Translate</Text>
             </TouchableOpacity>
-            <Text style={styles.title2}>Translated Text: </Text>
+            <Text style={styles.title2}>Translated Text:</Text>
             <Text style={styles.text}>{translatedText}</Text>
         </View>
     );
@@ -156,8 +173,8 @@ const styles = StyleSheet.create({
         color: '#fff',
         fontSize: 32,
         fontWeight: 'bold',
-        marginBottom: 20,
         marginTop: 50,
+        marginBottom: 20,
     },
     text: {
         color: '#fff',
