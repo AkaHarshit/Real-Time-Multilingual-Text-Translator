@@ -1,7 +1,6 @@
 import { StyleSheet, View } from 'react-native';
 import TranslateApp from './src'; 
 
-
 export default function App() {
   return (
     <View style={styles.container}>
