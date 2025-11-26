@@ -1,5 +1,5 @@
 import { StyleSheet, View } from 'react-native';
-import TranslateApp from './translate/src'; 
+import TranslateApp from './src'; 
 
 export default function App() {
   return (
