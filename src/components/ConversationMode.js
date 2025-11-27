@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import { Text, IconButton, ActivityIndicator, useTheme, Card, Avatar } from 'react-native-paper';
+import { Text, IconButton, ActivityIndicator, useTheme, Card, TextInput, Button } from 'react-native-paper';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Speech from 'expo-speech';
 import { translateTextApi } from '../utils/api';
 
@@ -44,16 +45,27 @@ const ConversationMode = ({ fromLanguage, toLanguage }) => {
     };
 
 
+    const scrollViewRef = useRef(null);
+
+    useEffect(() => {
+        if (messages.length > 0) {
+            scrollViewRef.current?.scrollToEnd({ animated: true });
+        }
+    }, [messages]);
+
+    const isDarkTheme = theme.dark;
+
     return (
-        <View style={styles.container}>
+        <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['bottom']}>
             <ScrollView
+                ref={scrollViewRef}
                 style={styles.chatContainer}
                 contentContainerStyle={styles.chatContent}
-                ref={ref => ref?.scrollToEnd({ animated: true })}
+                keyboardShouldPersistTaps="handled"
             >
                 {messages.length === 0 && (
                     <View style={styles.emptyState}>
-                        <Text style={{ color: theme.colors.outline }}>Start a conversation...</Text>
+                        <Text style={{ color: theme.colors.onSurfaceVariant, fontSize: 16 }}>Start a conversation...</Text>
                     </View>
                 )}
                 {messages.map((msg) => {
@@ -65,14 +77,31 @@ const ConversationMode = ({ fromLanguage, toLanguage }) => {
                         ]}>
                             <Card style={[
                                 styles.messageBubble,
-                                isFrom ? { backgroundColor: theme.colors.primaryContainer } : { backgroundColor: theme.colors.secondaryContainer }
+                                { 
+                                    backgroundColor: isFrom 
+                                        ? theme.colors.primaryContainer 
+                                        : theme.colors.secondaryContainer,
+                                    elevation: isDarkTheme ? 0 : 2,
+                                    borderWidth: isDarkTheme ? 1 : 0,
+                                    borderColor: theme.colors.outline + '20'
+                                }
                             ]}>
                                 <Card.Content style={styles.bubbleContent}>
-                                    <Text variant="bodyMedium" style={styles.originalText}>{msg.text}</Text>
+                                    <Text 
+                                        variant="bodyMedium" 
+                                        style={[styles.originalText, { color: theme.colors.onSurfaceVariant }]}
+                                    >
+                                        {msg.text}
+                                    </Text>
                                     {msg.isTranslated ? (
-                                        <Text variant="bodyLarge" style={styles.translatedText}>{msg.translatedText}</Text>
+                                        <Text 
+                                            variant="bodyLarge" 
+                                            style={[styles.translatedText, { color: theme.colors.onSurface }]}
+                                        >
+                                            {msg.translatedText}
+                                        </Text>
                                     ) : (
-                                        <ActivityIndicator size="small" />
+                                        <ActivityIndicator size="small" color={theme.colors.primary} />
                                     )}
                                 </Card.Content>
                             </Card>
@@ -81,47 +110,59 @@ const ConversationMode = ({ fromLanguage, toLanguage }) => {
                 })}
             </ScrollView>
 
-            <View style={[styles.inputArea, { backgroundColor: theme.colors.surface }]}>
-                <TouchableOpacity
-                    style={[styles.inputButton, { backgroundColor: theme.colors.primary }]}
-                    onPress={() => {
-                        setCurrentSpeaker('from');
-                    }}
-                >
-                    <Text style={styles.buttonText}>{fromLanguage.value}</Text>
-                </TouchableOpacity>
+            <SafeAreaView edges={['bottom']} style={{ backgroundColor: theme.colors.surface }}>
+                <View style={[
+                    styles.inputArea, 
+                    { 
+                        backgroundColor: theme.colors.surface,
+                        borderTopWidth: isDarkTheme ? 1 : 0,
+                        borderTopColor: theme.colors.outline + '20'
+                    }
+                ]}>
+                    <TouchableOpacity
+                        style={[styles.inputButton, { backgroundColor: theme.colors.primary }]}
+                        onPress={() => {
+                            setCurrentSpeaker('from');
+                        }}
+                    >
+                        <Text style={styles.buttonText}>{fromLanguage.value}</Text>
+                    </TouchableOpacity>
 
-                <TouchableOpacity
-                    style={[styles.inputButton, { backgroundColor: theme.colors.secondary }]}
-                    onPress={() => {
-                        setCurrentSpeaker('to');
-                    }}
-                >
-                    <Text style={styles.buttonText}>{toLanguage.value}</Text>
-                </TouchableOpacity>
-            </View>
+                    <TouchableOpacity
+                        style={[styles.inputButton, { backgroundColor: theme.colors.secondary }]}
+                        onPress={() => {
+                            setCurrentSpeaker('to');
+                        }}
+                    >
+                        <Text style={styles.buttonText}>{toLanguage.value}</Text>
+                    </TouchableOpacity>
+                </View>
+            </SafeAreaView>
             {currentSpeaker && (
-                <View style={styles.inputOverlay}>
-                    <View style={[styles.inputBox, { backgroundColor: theme.colors.surface }]}>
-                        <Text variant="titleMedium" style={{ marginBottom: 8 }}>
-                            Speaking: {currentSpeaker === 'from' ? fromLanguage.value : toLanguage.value}
-                        </Text>
-                        <InputComponent
-                            onSubmit={(text) => {
-                                handleSend(text, currentSpeaker);
-                                setCurrentSpeaker(null);
-                            }}
-                            onCancel={() => setCurrentSpeaker(null)}
-                        />
-                    </View>
+                <View style={[styles.inputOverlay, { backgroundColor: 'rgba(0,0,0,0.6)' }]}>
+                    <Card style={[styles.inputBox, { backgroundColor: theme.colors.surface }]}>
+                        <Card.Content>
+                            <Text variant="titleMedium" style={{ marginBottom: 8, color: theme.colors.onSurface }}>
+                                Speaking: {currentSpeaker === 'from' ? fromLanguage.value : toLanguage.value}
+                            </Text>
+                            <InputComponent
+                                onSubmit={(text) => {
+                                    handleSend(text, currentSpeaker);
+                                    setCurrentSpeaker(null);
+                                }}
+                                onCancel={() => setCurrentSpeaker(null)}
+                            />
+                        </Card.Content>
+                    </Card>
                 </View>
             )}
-        </View>
+        </SafeAreaView>
     );
 };
-import { TextInput, Button } from 'react-native-paper';
+
 const InputComponent = ({ onSubmit, onCancel }) => {
     const [text, setText] = useState('');
+    const theme = useTheme();
     return (
         <View>
             <TextInput
@@ -129,12 +170,26 @@ const InputComponent = ({ onSubmit, onCancel }) => {
                 value={text}
                 onChangeText={setText}
                 placeholder="Type here..."
+                placeholderTextColor={theme.colors.onSurfaceVariant}
                 mode="outlined"
                 style={{ marginBottom: 12 }}
+                textColor={theme.colors.onSurface}
             />
-            <View style={{ flexDirection: 'row', justifyContent: 'flex-end' }}>
-                <Button onPress={onCancel}>Cancel</Button>
-                <Button mode="contained" onPress={() => onSubmit(text)}>Send</Button>
+            <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 8 }}>
+                <Button 
+                    onPress={onCancel}
+                    textColor={theme.colors.onSurface}
+                >
+                    Cancel
+                </Button>
+                <Button 
+                    mode="contained" 
+                    onPress={() => onSubmit(text)}
+                    buttonColor={theme.colors.primary}
+                    textColor={theme.colors.onPrimary}
+                >
+                    Send
+                </Button>
             </View>
         </View>
     );
@@ -202,14 +257,12 @@ const styles = StyleSheet.create({
     inputOverlay: {
         position: 'absolute',
         top: 0, left: 0, right: 0, bottom: 0,
-        backgroundColor: 'rgba(0,0,0,0.5)',
         justifyContent: 'center',
         padding: 20,
     },
     inputBox: {
-        padding: 20,
         borderRadius: 16,
-        elevation: 5,
+        elevation: 8,
     },
 });
 

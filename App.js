@@ -1,11 +1,12 @@
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import TranslateApp from './src'; 
 
 export default function App() {
   return (
-    <View style={styles.container}>
+    <SafeAreaProvider style={styles.container}>
       <TranslateApp/>
-    </View>
+    </SafeAreaProvider>
   );
 }
 

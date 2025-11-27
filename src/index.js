@@ -124,36 +124,45 @@ const TranslateApp = () => {
         ),
     });
 
-    return (
-        <SafeAreaProvider>
-            <PaperProvider theme={theme}>
-                <StatusBar
-                    barStyle="light-content"
-                    backgroundColor="transparent"
-                    translucent
-                />
-                <LinearGradient
-                    colors={['#6C63FF', '#4834D4']}
-                    style={styles.header}
-                >
-                    <SafeAreaView edges={['top', 'left', 'right']} style={styles.headerContent}>
-                        <Text variant="headlineMedium" style={styles.headerTitle}>BabelText</Text>
-                        <Text variant="bodySmall" style={styles.headerSubtitle}>
-                            {routes[index].title}
-                        </Text>
-                    </SafeAreaView>
-                </LinearGradient>
+    const headerGradientColors = isDarkTheme 
+        ? ['#4A3FA8', '#2E2466'] 
+        : ['#6C63FF', '#4834D4'];
 
-                <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-                    <BottomNavigation
-                        navigationState={{ index, routes }}
-                        onIndexChange={setIndex}
-                        renderScene={renderScene}
-                        barStyle={{ backgroundColor: theme.colors.surface }}
-                    />
-                </View>
-            </PaperProvider>
-        </SafeAreaProvider>
+    return (
+        <PaperProvider theme={theme}>
+            <StatusBar
+                barStyle={isDarkTheme ? "light-content" : "light-content"}
+                backgroundColor="transparent"
+                translucent
+            />
+            <LinearGradient
+                colors={headerGradientColors}
+                style={styles.header}
+            >
+                <SafeAreaView edges={['top', 'left', 'right']} style={styles.headerContent}>
+                    <Text variant="headlineMedium" style={styles.headerTitle}>BabelText</Text>
+                    <Text variant="bodySmall" style={styles.headerSubtitle}>
+                        {routes[index].title}
+                    </Text>
+                </SafeAreaView>
+            </LinearGradient>
+
+            <SafeAreaView 
+                style={[styles.container, { backgroundColor: theme.colors.background }]}
+                edges={['left', 'right', 'bottom']}
+            >
+                <BottomNavigation
+                    navigationState={{ index, routes }}
+                    onIndexChange={setIndex}
+                    renderScene={renderScene}
+                    barStyle={{ 
+                        backgroundColor: theme.colors.surface,
+                        borderTopWidth: isDarkTheme ? 1 : 0,
+                        borderTopColor: theme.colors.outline + '20'
+                    }}
+                />
+            </SafeAreaView>
+        </PaperProvider>
     );
 };
 
