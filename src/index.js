@@ -158,7 +158,7 @@ const TranslateApp = () => {
                     barStyle={{ 
                         backgroundColor: theme.colors.surface,
                         borderTopWidth: isDarkTheme ? 1 : 0,
-                        borderTopColor: theme.colors.outline + '20'
+                        borderTopColor: theme.colors.outline
                     }}
                 />
             </SafeAreaView>

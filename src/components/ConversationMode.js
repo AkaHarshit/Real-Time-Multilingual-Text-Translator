@@ -1,14 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import { Text, IconButton, ActivityIndicator, useTheme, Card, TextInput, Button } from 'react-native-paper';
+import { View, StyleSheet, ScrollView, TouchableOpacity, Animated, Keyboard } from 'react-native';
+import { Text, IconButton, ActivityIndicator, useTheme, Card, TextInput, Button, Chip } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import * as Speech from 'expo-speech';
 import { translateTextApi } from '../utils/api';
 
 const ConversationMode = ({ fromLanguage, toLanguage }) => {
     const [messages, setMessages] = useState([]);
     const [isListening, setIsListening] = useState(false);
-    const [currentSpeaker, setCurrentSpeaker] = useState(null); 
+    const [currentSpeaker, setCurrentSpeaker] = useState(null);
+    const [fadeAnim] = useState(new Animated.Value(0));
     const theme = useTheme();
 
 
@@ -50,6 +52,11 @@ const ConversationMode = ({ fromLanguage, toLanguage }) => {
     useEffect(() => {
         if (messages.length > 0) {
             scrollViewRef.current?.scrollToEnd({ animated: true });
+            Animated.timing(fadeAnim, {
+                toValue: 1,
+                duration: 300,
+                useNativeDriver: true,
+            }).start();
         }
     }, [messages]);
 
@@ -68,25 +75,42 @@ const ConversationMode = ({ fromLanguage, toLanguage }) => {
                         <Text style={{ color: theme.colors.onSurfaceVariant, fontSize: 16 }}>Start a conversation...</Text>
                     </View>
                 )}
-                {messages.map((msg) => {
+                {messages.map((msg, index) => {
                     const isFrom = msg.speaker === 'from';
                     return (
-                        <View key={msg.id} style={[
-                            styles.messageRow,
-                            isFrom ? styles.messageRowLeft : styles.messageRowRight
-                        ]}>
+                        <Animated.View 
+                            key={msg.id} 
+                            style={[
+                                styles.messageRow,
+                                isFrom ? styles.messageRowLeft : styles.messageRowRight,
+                                { opacity: fadeAnim }
+                            ]}
+                        >
                             <Card style={[
                                 styles.messageBubble,
                                 { 
                                     backgroundColor: isFrom 
                                         ? theme.colors.primaryContainer 
                                         : theme.colors.secondaryContainer,
-                                    elevation: isDarkTheme ? 0 : 2,
+                                    elevation: isDarkTheme ? 0 : 3,
                                     borderWidth: isDarkTheme ? 1 : 0,
-                                    borderColor: theme.colors.outline + '20'
+                                    borderColor: theme.colors.outline,
+                                    borderLeftWidth: isFrom ? 4 : 0,
+                                    borderRightWidth: !isFrom ? 4 : 0,
+                                    borderLeftColor: isFrom ? theme.colors.primary : 'transparent',
+                                    borderRightColor: !isFrom ? theme.colors.secondary : 'transparent',
                                 }
                             ]}>
                                 <Card.Content style={styles.bubbleContent}>
+                                    <View style={styles.messageHeader}>
+                                        <Chip 
+                                            icon={isFrom ? fromLanguage.flag : toLanguage.flag}
+                                            style={[styles.langChip, { backgroundColor: theme.colors.surface, opacity: 0.8 }]}
+                                            textStyle={{ fontSize: 10 }}
+                                        >
+                                            {isFrom ? fromLanguage.value : toLanguage.value}
+                                        </Chip>
+                                    </View>
                                     <Text 
                                         variant="bodyMedium" 
                                         style={[styles.originalText, { color: theme.colors.onSurfaceVariant }]}
@@ -101,11 +125,16 @@ const ConversationMode = ({ fromLanguage, toLanguage }) => {
                                             {msg.translatedText}
                                         </Text>
                                     ) : (
-                                        <ActivityIndicator size="small" color={theme.colors.primary} />
+                                        <View style={styles.loadingContainer}>
+                                            <ActivityIndicator size="small" color={theme.colors.primary} />
+                                            <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginLeft: 8 }}>
+                                                Translating...
+                                            </Text>
+                                        </View>
                                     )}
                                 </Card.Content>
                             </Card>
-                        </View>
+                        </Animated.View>
                     );
                 })}
             </ScrollView>
@@ -116,15 +145,20 @@ const ConversationMode = ({ fromLanguage, toLanguage }) => {
                     { 
                         backgroundColor: theme.colors.surface,
                         borderTopWidth: isDarkTheme ? 1 : 0,
-                        borderTopColor: theme.colors.outline + '20'
+                        borderTopColor: theme.colors.outline,
+                        paddingTop: 12,
+                        paddingBottom: 8,
                     }
                 ]}>
                     <TouchableOpacity
                         style={[styles.inputButton, { backgroundColor: theme.colors.primary }]}
                         onPress={() => {
                             setCurrentSpeaker('from');
+                            Keyboard.dismiss();
                         }}
+                        activeOpacity={0.8}
                     >
+                        <Text variant="titleMedium" style={styles.buttonFlag}>{fromLanguage.flag}</Text>
                         <Text style={styles.buttonText}>{fromLanguage.value}</Text>
                     </TouchableOpacity>
 
@@ -132,19 +166,29 @@ const ConversationMode = ({ fromLanguage, toLanguage }) => {
                         style={[styles.inputButton, { backgroundColor: theme.colors.secondary }]}
                         onPress={() => {
                             setCurrentSpeaker('to');
+                            Keyboard.dismiss();
                         }}
+                        activeOpacity={0.8}
                     >
+                        <Text variant="titleMedium" style={styles.buttonFlag}>{toLanguage.flag}</Text>
                         <Text style={styles.buttonText}>{toLanguage.value}</Text>
                     </TouchableOpacity>
                 </View>
             </SafeAreaView>
             {currentSpeaker && (
-                <View style={[styles.inputOverlay, { backgroundColor: 'rgba(0,0,0,0.6)' }]}>
-                    <Card style={[styles.inputBox, { backgroundColor: theme.colors.surface }]}>
+                <View style={[styles.inputOverlay, { backgroundColor: 'rgba(0,0,0,0.7)' }]}>
+                    <Card style={[styles.inputBox, { backgroundColor: theme.colors.surface, elevation: 8 }]}>
                         <Card.Content>
-                            <Text variant="titleMedium" style={{ marginBottom: 8, color: theme.colors.onSurface }}>
-                                Speaking: {currentSpeaker === 'from' ? fromLanguage.value : toLanguage.value}
-                            </Text>
+                            <View style={styles.inputHeader}>
+                                <View style={styles.inputHeaderContent}>
+                                    <Text variant="titleLarge" style={{ color: theme.colors.primary, fontWeight: '600' }}>
+                                        {currentSpeaker === 'from' ? fromLanguage.flag : toLanguage.flag}
+                                    </Text>
+                                    <Text variant="titleMedium" style={{ marginLeft: 8, color: theme.colors.onSurface }}>
+                                        {currentSpeaker === 'from' ? fromLanguage.value : toLanguage.value}
+                                    </Text>
+                                </View>
+                            </View>
                             <InputComponent
                                 onSubmit={(text) => {
                                     handleSend(text, currentSpeaker);
@@ -245,14 +289,43 @@ const styles = StyleSheet.create({
     inputButton: {
         flex: 1,
         padding: 16,
-        borderRadius: 30,
+        borderRadius: 16,
         alignItems: 'center',
-        marginHorizontal: 8,
-        elevation: 2,
+        marginHorizontal: 6,
+        elevation: 3,
+        flexDirection: 'row',
+        justifyContent: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+    },
+    buttonFlag: {
+        marginRight: 8,
+        fontSize: 24,
     },
     buttonText: {
         color: '#fff',
-        fontWeight: 'bold',
+        fontWeight: '600',
+        fontSize: 16,
+    },
+    messageHeader: {
+        marginBottom: 8,
+    },
+    langChip: {
+        height: 24,
+    },
+    loadingContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginTop: 8,
+    },
+    inputHeader: {
+        marginBottom: 16,
+    },
+    inputHeaderContent: {
+        flexDirection: 'row',
+        alignItems: 'center',
     },
     inputOverlay: {
         position: 'absolute',

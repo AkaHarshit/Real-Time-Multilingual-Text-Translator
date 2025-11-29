@@ -81,3 +81,35 @@ export const saveSettings = async (settings) => {
         console.error('Error saving settings', e);
     }
 };
+
+export const clearHistory = async () => {
+    try {
+        await AsyncStorage.removeItem(HISTORY_KEY);
+        return [];
+    } catch (e) {
+        console.error('Error clearing history', e);
+        return [];
+    }
+};
+
+export const clearFavorites = async () => {
+    try {
+        await AsyncStorage.removeItem(FAVORITES_KEY);
+        return [];
+    } catch (e) {
+        console.error('Error clearing favorites', e);
+        return [];
+    }
+};
+
+export const deleteHistoryItem = async (itemId) => {
+    try {
+        const history = await getHistory();
+        const updatedHistory = history.filter(item => item.id !== itemId);
+        await saveHistory(updatedHistory);
+        return updatedHistory;
+    } catch (e) {
+        console.error('Error deleting history item', e);
+        return [];
+    }
+};
