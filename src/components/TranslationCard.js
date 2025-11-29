@@ -17,6 +17,7 @@ const TranslationCard = ({ fromLanguage, setFromLanguage, toLanguage, setToLangu
     const [recentTranslations, setRecentTranslations] = useState([]);
     const [copied, setCopied] = useState(false);
     const [fadeAnim] = useState(new Animated.Value(0));
+    const [errorMessage, setErrorMessage] = useState('');
     const theme = useTheme();
     const isDarkTheme = theme.dark;
 
@@ -45,9 +46,12 @@ const TranslationCard = ({ fromLanguage, setFromLanguage, toLanguage, setToLangu
         if (!inputText.trim()) return;
         Keyboard.dismiss();
         setIsLoading(true);
+        setErrorMessage('');
+        setTranslatedText('');
         try {
             const result = await translateTextApi(inputText, fromLanguage.value, toLanguage.value);
             setTranslatedText(result);
+            setErrorMessage('');
             await addToHistory({
                 original: inputText,
                 translated: result,
@@ -57,6 +61,8 @@ const TranslationCard = ({ fromLanguage, setFromLanguage, toLanguage, setToLangu
             await loadRecentTranslations();
         } catch (error) {
             console.error('Translation error:', error);
+            setErrorMessage(error.message || 'Translation failed. Please try again.');
+            setTranslatedText('');
         } finally {
             setIsLoading(false);
         }
@@ -115,9 +121,9 @@ const TranslationCard = ({ fromLanguage, setFromLanguage, toLanguage, setToLangu
                 showsVerticalScrollIndicator={false}
             >
                 {/* Recent Translations */}
-                {recentTranslations.length > 0 && !inputText && (
+                {recentTranslations.length > 0 && (
                     <View style={styles.recentSection}>
-                        <Text variant="labelLarge" style={[styles.sectionTitle, { color: theme.colors.onSurfaceVariant }]}>
+                        <Text variant="labelLarge" style={[styles.sectionTitle, { color: theme.colors.onSurface, fontSize: 16 }]}>
                             Recent Translations
                         </Text>
                         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.recentScroll}>
@@ -133,7 +139,7 @@ const TranslationCard = ({ fromLanguage, setFromLanguage, toLanguage, setToLangu
                                                 <Chip 
                                                     icon="translate" 
                                                     style={[styles.recentChip, { backgroundColor: theme.colors.primaryContainer }]}
-                                                    textStyle={{ fontSize: 10 }}
+                                                    textStyle={{ fontSize: 12, color: theme.colors.onPrimaryContainer, fontWeight: '600' }}
                                                 >
                                                     {item.from} → {item.to}
                                                 </Chip>
@@ -141,7 +147,7 @@ const TranslationCard = ({ fromLanguage, setFromLanguage, toLanguage, setToLangu
                                             <Text 
                                                 variant="bodySmall" 
                                                 numberOfLines={2} 
-                                                style={[styles.recentText, { color: theme.colors.onSurfaceVariant }]}
+                                                style={[styles.recentText, { color: theme.colors.onSurface, fontSize: 14, lineHeight: 20 }]}
                                             >
                                                 {item.original}
                                             </Text>
@@ -164,7 +170,7 @@ const TranslationCard = ({ fromLanguage, setFromLanguage, toLanguage, setToLangu
                             <Text variant="titleMedium" style={{ color: theme.colors.primary, fontWeight: '600' }}>
                                 {fromLanguage.flag}
                             </Text>
-                            <Text variant="bodyMedium" style={{ color: theme.colors.onSurface, marginLeft: 8 }}>
+                            <Text variant="bodyMedium" style={{ color: theme.colors.onSurface, marginLeft: 8, fontSize: 15 }}>
                                 {fromLanguage.value}
                             </Text>
                             <IconButton 
@@ -196,7 +202,7 @@ const TranslationCard = ({ fromLanguage, setFromLanguage, toLanguage, setToLangu
                             <Text variant="titleMedium" style={{ color: theme.colors.secondary, fontWeight: '600' }}>
                                 {toLanguage.flag}
                             </Text>
-                            <Text variant="bodyMedium" style={{ color: theme.colors.onSurface, marginLeft: 8 }}>
+                            <Text variant="bodyMedium" style={{ color: theme.colors.onSurface, marginLeft: 8, fontSize: 15 }}>
                                 {toLanguage.value}
                             </Text>
                             <IconButton 
@@ -245,7 +251,7 @@ const TranslationCard = ({ fromLanguage, setFromLanguage, toLanguage, setToLangu
                 <Card style={[styles.card, { backgroundColor: theme.colors.surface, elevation: isDarkTheme ? 0 : 3 }]}>
                     <Card.Content>
                         <View style={styles.inputHeader}>
-                            <Text variant="labelLarge" style={{ color: theme.colors.primary, fontWeight: '600' }}>
+                            <Text variant="labelLarge" style={{ color: theme.colors.primary, fontWeight: '600', fontSize: 16 }}>
                                 {fromLanguage.flag} {fromLanguage.value}
                             </Text>
                             <View style={styles.statsRow}>
@@ -329,6 +335,44 @@ const TranslationCard = ({ fromLanguage, setFromLanguage, toLanguage, setToLangu
                     </LinearGradient>
                 </TouchableOpacity>
 
+                {/* Error Message */}
+                {errorMessage ? (
+                    <Card style={[
+                        styles.errorCard,
+                        {
+                            backgroundColor: theme.colors.errorContainer,
+                            elevation: isDarkTheme ? 0 : 2,
+                            marginTop: 12,
+                        }
+                    ]}>
+                        <Card.Content style={styles.errorContent}>
+                            <View style={styles.errorRow}>
+                                <IconButton 
+                                    icon="alert-circle" 
+                                    iconColor={theme.colors.onErrorContainer}
+                                    size={24}
+                                    style={{ margin: 0 }}
+                                />
+                                <View style={styles.errorTextContainer}>
+                                    <Text variant="bodyMedium" style={{ color: theme.colors.onErrorContainer, fontSize: 15, fontWeight: '600' }}>
+                                        Translation Error
+                                    </Text>
+                                    <Text variant="bodySmall" style={{ color: theme.colors.onErrorContainer, fontSize: 14, marginTop: 4 }}>
+                                        {errorMessage}
+                                    </Text>
+                                </View>
+                                <IconButton 
+                                    icon="close" 
+                                    iconColor={theme.colors.onErrorContainer}
+                                    size={20}
+                                    onPress={() => setErrorMessage('')}
+                                    style={{ margin: 0 }}
+                                />
+                            </View>
+                        </Card.Content>
+                    </Card>
+                ) : null}
+
                 {/* Translation Result */}
                 {translatedText ? (
                     <Animated.View style={{ opacity: fadeAnim }}>
@@ -346,7 +390,7 @@ const TranslationCard = ({ fromLanguage, setFromLanguage, toLanguage, setToLangu
                             <Card.Content>
                                 <View style={styles.resultHeader}>
                                     <View style={styles.resultTitleRow}>
-                                        <Text variant="titleMedium" style={{ color: theme.colors.secondary, fontWeight: '600' }}>
+                                        <Text variant="titleMedium" style={{ color: theme.colors.secondary, fontWeight: '600', fontSize: 18 }}>
                                             {toLanguage.flag} {toLanguage.value}
                                         </Text>
                                         <Chip 
@@ -385,7 +429,7 @@ const TranslationCard = ({ fromLanguage, setFromLanguage, toLanguage, setToLangu
                                     </View>
                                 </View>
                                 <Divider style={[styles.divider, { backgroundColor: theme.colors.outline, opacity: 0.3, marginVertical: 12 }]} />
-                                <Text variant="bodyLarge" style={[styles.translatedText, { color: theme.colors.onSurface, lineHeight: 26 }]}>
+                                <Text variant="bodyLarge" style={[styles.translatedText, { color: theme.colors.onSurface, lineHeight: 26, fontSize: 16 }]}>
                                     {translatedText}
                                 </Text>
                             </Card.Content>
@@ -410,11 +454,13 @@ const styles = StyleSheet.create({
     },
     recentSection: {
         marginBottom: 20,
+        marginTop: 8,
     },
     sectionTitle: {
         marginBottom: 12,
-        fontWeight: '600',
+        fontWeight: '700',
         letterSpacing: 0.5,
+        fontSize: 16,
     },
     recentScroll: {
         marginHorizontal: -4,
@@ -426,16 +472,17 @@ const styles = StyleSheet.create({
         maxWidth: 200,
     },
     recentCardContent: {
-        padding: 12,
+        padding: 14,
     },
     recentHeader: {
-        marginBottom: 8,
+        marginBottom: 10,
     },
     recentChip: {
-        height: 24,
+        height: 28,
     },
     recentText: {
-        lineHeight: 18,
+        lineHeight: 20,
+        fontSize: 14,
     },
     card: {
         marginBottom: 16,
@@ -530,6 +577,21 @@ const styles = StyleSheet.create({
     translatedText: {
         lineHeight: 26,
         fontSize: 16,
+    },
+    errorCard: {
+        borderRadius: 16,
+        marginBottom: 12,
+    },
+    errorContent: {
+        paddingVertical: 8,
+    },
+    errorRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    errorTextContainer: {
+        flex: 1,
+        marginLeft: 8,
     },
 });
 
