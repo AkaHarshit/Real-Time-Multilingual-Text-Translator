@@ -4,6 +4,13 @@ A cross-platform **React Native + Expo** application that provides **real-time m
 
 ---
 
+## 🎥 Demo Video
+
+Watch the app demo here:
+👉 **[https://drive.google.com/file/d/1jcR3MaHZDfDZuTTcjuXTSqoQYxtxQ-cl/view?usp=drive_link](https://drive.google.com/file/d/1jcR3MaHZDfDZuTTcjuXTSqoQYxtxQ-cl/view?usp=drive_link)**
+
+---
+
 ## 🌐 Features
 
 * Real-time text translation
@@ -58,13 +65,6 @@ This command will:
 * Open Expo Developer Tools in the browser
 * Allow you to run the app on Android/iOS via **Expo Go**
 * Press **w** to run on Web
-
----
-
-## 🎥 Demo Video
-
-Watch the app demo here:
-👉 **[https://drive.google.com/file/d/1jcR3MaHZDfDZuTTcjuXTSqoQYxtxQ-cl/view?usp=drive_link](https://drive.google.com/file/d/1jcR3MaHZDfDZuTTcjuXTSqoQYxtxQ-cl/view?usp=drive_link)**
 
 ---
 
